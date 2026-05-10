@@ -49,6 +49,7 @@
         <view class="desc-input-wrap">
           <textarea
             class="desc-input"
+            :show-confirm-bar="false"
             v-model="attendantRemark"
             placeholder="可简单说明就诊过程，例如：检查项目较多，排队时间较长等"
             maxlength="200"
@@ -321,6 +322,9 @@ export default {
   font-size: 22rpx;
   color: #98a2b3;
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .duration-input {
   display: flex;
@@ -353,12 +357,14 @@ export default {
 }
 .desc-input-wrap {
   width: 100%;
+  max-width: 100%;
   min-height: 180rpx;
   box-sizing: border-box;
   background: #f8f8f8;
   border: 1rpx solid #e4ebf4;
   border-radius: 14rpx;
   padding: 16rpx;
+  overflow: hidden;
 }
 .desc-input {
   width: 100%;
@@ -371,6 +377,9 @@ export default {
   font-size: 25rpx;
   color: var(--text-main);
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .desc-count {
   margin-top: 8rpx;
