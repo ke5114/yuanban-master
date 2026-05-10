@@ -56,9 +56,12 @@
               <view v-if="msg.senderId === currentUserId && msg.status === 'sending'" class="loading-spinner"></view>
               <view v-if="msg.senderId === currentUserId && msg.status === 'failed'" class="fail-icon">!</view>
 
-              <view class="content-bubble" :class="{'voice-bubble': msg.msgType === 3}">
+              <view class="content-bubble" :class="{'voice-bubble': msg.msgType === 3}" @longpress="selectReplyTarget(msg)">
+                <view v-if="msg.replySummary" class="reply-quote">
+                  <text class="reply-quote-text">{{ msg.replySummary }}</text>
+                </view>
                 <!-- 文本 -->
-                <text v-if="msg.msgType === 1" class="text">{{ msg.content }}</text>
+                <text v-if="msg.msgType === 1" class="text">{{ msg.displayContent }}</text>
                 <!-- 图片 -->
                 <image v-else-if="msg.msgType === 2" class="image" :src="getImageUrl(msg.content)" mode="widthFix" @click="previewImage(getImageUrl(msg.content))"></image>
                 <!-- 语音 -->
@@ -86,6 +89,13 @@
 
     <!-- 底部输入区域 -->
     <view class="footer-area" :style="{ bottom: keyboardHeight + 'px' }">
+        <view v-if="replyTarget" class="reply-preview">
+          <view class="reply-preview-main">
+            <text class="reply-preview-label">回复 {{ replyTarget.senderId === currentUserId ? '自己' : (replyTarget.senderName || targetName) }}</text>
+            <text class="reply-preview-text">{{ replyTarget.contentPreview }}</text>
+          </view>
+          <text class="reply-preview-close" @click="clearReplyTarget">×</text>
+        </view>
         <view class="input-toolbar">
             <!-- 语音切换 -->
             <view class="icon-btn" @click="switchVoiceMode">
@@ -206,6 +216,7 @@ const pageSize = 20
 const currentPage = ref(1)
 const isSending = ref(false)
 const readSyncing = ref(false)
+const replyTarget = ref(null)
 
 // 新增状态
 const isVoiceMode = ref(false)
@@ -415,10 +426,43 @@ const sendMessage = async (content, type) => {
 }
 
 const sendText = () => {
-  if (!inputText.value.trim() || isSending.value) return
-  sendMessage(inputText.value, 1)
+  const pureText = inputText.value.trim()
+  if (!pureText || isSending.value) return
+  const payload = replyTarget.value ? `[reply:${replyTarget.value.id}] ${pureText}` : pureText
+  sendMessage(payload, 1)
   inputText.value = ''
+  clearReplyTarget()
 }
+
+const selectReplyTarget = (msg) => {
+  if (!msg) return
+  const contentPreview = buildContentPreview(msg)
+  replyTarget.value = {
+    id: msg.id,
+    senderId: msg.senderId,
+    senderName: msg.senderName,
+    contentPreview
+  }
+}
+
+const clearReplyTarget = () => {
+  replyTarget.value = null
+}
+
+const buildContentPreview = (msg = {}) => {
+  if (Number(msg.msgType) === 2) return '[图片]'
+  if (Number(msg.msgType) === 3) return '[语音]'
+  if (Number(msg.msgType) === 4) return '[位置]'
+  return String(msg.content || '').slice(0, 40)
+}
+
+const parseReplyPayload = (content = '') => {
+  const raw = String(content || '')
+  const matched = raw.match(/^\[reply:(\d+)\]\s*/)
+  if (!matched) return { replyId: null, text: raw }
+  return { replyId: Number(matched[1]), text: raw.slice(matched[0].length) }
+}
+
 
 const chooseImage = (sourceType) => {
   uni.chooseImage({
@@ -614,9 +658,14 @@ const normalizeChatMessage = (msg) => {
     const displayAvatar = msg.senderId === currentUserId.value
         ? resolveAvatarUrl(currentUserAvatar, userPlaceholder)
         : resolveAvatarUrl(msg.senderAvatar || targetAvatar.value || '', userPlaceholder)
+    const parsedReply = Number(msg.msgType) === 1 ? parseReplyPayload(msg.content) : { replyId: null, text: msg.content }
+    const replySource = parsedReply.replyId ? messages.value.find(item => Number(item.id) === parsedReply.replyId) : null
+    const replySummary = replySource ? `${replySource.senderId === currentUserId.value ? '你' : (replySource.senderName || targetName.value)}：${buildContentPreview(replySource)}` : ''
     return {
         ...msg,
-        displayAvatar
+        displayAvatar,
+        displayContent: parsedReply.text,
+        replySummary
     }
 }
 
@@ -853,6 +902,24 @@ $bubble-self: $primary-color;
     box-shadow: 0 4rpx 12rpx rgba(102,166,255,0.3);
     &.sending { background: linear-gradient(135deg, #b7d8ff 0%, #95c3ff 100%); box-shadow: 0 2rpx 8rpx rgba(102,166,255,0.2); }
 }
+
+.reply-preview {
+  margin: 14rpx 20rpx 0;
+  padding: 14rpx 18rpx;
+  border-left: 6rpx solid $primary-color;
+  background: #f4f8ff;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.reply-preview-main { min-width: 0; flex: 1; }
+.reply-preview-label { display:block; font-size: 22rpx; color:#5b6b85; margin-bottom: 6rpx; }
+.reply-preview-text { display:block; font-size: 24rpx; color: $text-main; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reply-preview-close { font-size: 36rpx; line-height: 1; color:#8aa0c2; }
+.reply-quote { margin-bottom: 8rpx; padding: 8rpx 12rpx; background: rgba(0,0,0,0.06); border-radius: 8rpx; }
+.reply-quote-text { font-size: 22rpx; color: inherit; opacity: 0.85; }
 
 /* 面板区域 */
 .panel-area {

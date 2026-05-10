@@ -22,9 +22,9 @@
         <view class="time-row">
           <text class="label">实际时长</text>
           <view class="duration-input">
-            <button class="step-btn" @click="changeDuration(-0.5)">-</button>
+            <button class="step-btn" @click="changeDuration(-0.5)"><text class="step-symbol minus">−</text></button>
             <text class="duration-text">{{ actualDuration.toFixed(1) }} 小时</text>
-            <button class="step-btn" @click="changeDuration(0.5)">+</button>
+            <button class="step-btn" @click="changeDuration(0.5)"><text class="step-symbol plus">+</text></button>
           </view>
         </view>
         <view class="time-row">
@@ -49,6 +49,7 @@
         <view class="desc-input-wrap">
           <textarea
             class="desc-input"
+            :show-confirm-bar="false"
             v-model="attendantRemark"
             placeholder="可简单说明就诊过程，例如：检查项目较多，排队时间较长等"
             maxlength="200"
@@ -68,7 +69,7 @@
 </template>
 
 <script>
-import { get, post } from '@/utils/api.js'
+import { get, post, put } from '@/utils/api.js'
 
 export default {
   data() {
@@ -158,6 +159,14 @@ export default {
       this.actualDuration = Math.round(v * 2) / 2
       this.recalcFeeDiff()
     },
+
+    normalizeDurationValue(value) {
+      const raw = Number(value)
+      if (!Number.isFinite(raw)) return null
+      const fixed = Math.round(raw * 2) / 2
+      if (fixed < 0.5 || fixed > 24) return null
+      return Number(fixed.toFixed(1))
+    },
     recalcFeeDiff() {
       const expectedFee = this.calculateFee(this.serviceTypeNumber, this.actualDuration)
       this.feeDiff = expectedFee - (this.orderAmount || 0)
@@ -200,19 +209,33 @@ export default {
       return calcNormal()
     },
     async submit() {
-      if (!this.orderId) return
+      const orderId = Number(this.orderId)
+      if (!Number.isFinite(orderId) || orderId <= 0) {
+        uni.showToast({ title: '订单参数无效', icon: 'none' })
+        return
+      }
       if (this.submitting) return
+      const actualDuration = this.normalizeDurationValue(this.actualDuration)
+      if (actualDuration === null) {
+        uni.showToast({ title: '实际时长需在0.5-24小时', icon: 'none' })
+        return
+      }
+      const remark = String(this.attendantRemark || '').trim().slice(0, 200)
+      this.attendantRemark = remark
       this.submitting = true
       try {
-        const query = [`actualDuration=${encodeURIComponent(this.actualDuration)}`]
-        const remark = String(this.attendantRemark || '').trim()
+        const query = [`actualDuration=${encodeURIComponent(actualDuration.toFixed(1))}`]
         if (remark) {
           query.push(`attendantTimeRemark=${encodeURIComponent(remark)}`)
         }
-        const res = await post(`/attendant/orders/${this.orderId}/end?${query.join('&')}`)
+        const endpoint = `/attendant/orders/${orderId}/end?${query.join('&')}`
+        let res = await post(endpoint)
+        if (res.code !== 200) {
+          res = await put(endpoint)
+        }
         if (res.code === 200) {
           uni.$emit('escort-order-updated', {
-            orderId: Number(this.orderId),
+            orderId,
             action: 'waiting_confirm'
           })
           uni.showToast({ title: '已提交待确认', icon: 'success' })
@@ -224,7 +247,7 @@ export default {
         }
       } catch (e) {
         console.error('提交时长失败', e)
-        uni.showToast({ title: '提交失败', icon: 'none' })
+        uni.showToast({ title: '提交失败，请稍后重试', icon: 'none' })
       } finally {
         this.submitting = false
       }
@@ -321,18 +344,23 @@ export default {
   font-size: 22rpx;
   color: #98a2b3;
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .duration-input {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
 }
 .step-btn {
-  width: 64rpx;
-  height: 64rpx;
+  width: 68rpx;
+  height: 68rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
+  line-height: 68rpx;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
@@ -340,25 +368,42 @@ export default {
   background: #eef3f9;
   border-radius: 32rpx;
   border: none;
-  font-size: 32rpx;
+  font-size: 0;
   color: var(--text-main);
 }
 .step-btn::after {
   border: none;
 }
+.step-symbol {
+  display: block;
+  width: 68rpx;
+  text-align: center;
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 68rpx;
+  color: var(--text-main);
+}
+.step-symbol.minus {
+  transform: translateY(-1rpx);
+}
+.step-symbol.plus {
+  transform: translateY(-2rpx);
+}
 .duration-text {
-  margin: 0 16rpx;
+  margin: 0;
   font-size: 25rpx;
   color: var(--text-main);
 }
 .desc-input-wrap {
   width: 100%;
+  max-width: 100%;
   min-height: 180rpx;
   box-sizing: border-box;
   background: #f8f8f8;
   border: 1rpx solid #e4ebf4;
   border-radius: 14rpx;
   padding: 16rpx;
+  overflow: hidden;
 }
 .desc-input {
   width: 100%;
@@ -371,6 +416,9 @@ export default {
   font-size: 25rpx;
   color: var(--text-main);
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .desc-count {
   margin-top: 8rpx;
