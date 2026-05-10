@@ -438,6 +438,12 @@ public class AttendantController {
             @ApiParam(value = "陪诊师提交时长说明", example = "检查排队较久") @RequestParam(required = false) String attendantTimeRemark,
             @ApiIgnore HttpServletRequest request) {
         try {
+            if (actualDuration == null) {
+                return ResponseResult.error("实际服务时长不能为空");
+            }
+            if (actualDuration.compareTo(BigDecimal.valueOf(0.5)) < 0 || actualDuration.compareTo(BigDecimal.valueOf(24)) > 0) {
+                return ResponseResult.error("实际服务时长需在0.5~24小时之间");
+            }
             Integer currentUserId = AuthUtil.getCurrentUserId(request);
             String result = orderService.endService(orderId, currentUserId, actualDuration, attendantTimeRemark);
             if (result != null && (result.startsWith("服务结束成功") || result.startsWith("服务已提交"))) {

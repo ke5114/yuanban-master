@@ -1,6 +1,6 @@
 # Frontend Manifest
 
-更新时间: 2026-05-07
+更新时间: 2026-05-10
 
 本清单覆盖两个前端：uni-app 小程序端和 Vue 管理端。小程序页面来源于 `frontend/mini-program/pages.json`；管理端页面来源于 `frontend/admin/src/router/index.js`，接口封装来源于 `frontend/admin/src/utils/admin-api.js`。
 
@@ -34,7 +34,7 @@
 | `subpkg/order/order-detail` | 订单详情 | 用户订单详情，查看订单、支付尾款、取消、申诉、确认时长费用、补差额支付、查看二维码/联系陪诊师；待确认时长时展示陪诊师提交说明，确认按钮采用自适应布局避免文字裁切；时长确认卡中的“预计时长”固定展示下单预估值/预约时段推导值，不被陪诊师提交的 `actualDuration` 覆盖；确认负差额后展示待平台退款，不再直接显示已完成；补差额支付遇到登录态过期时只提示重新登录，不直接跳走当前订单页；陪诊师星级展示平均评分，按 `attendantScore + attendantEvaluationCount` 判断，无评价显示“暂无评分”。 | `/api/orders/{...}/cancel?reason={...}`<br>`/api/orders/{...}/dispute-time-fee{...}`<br>`/api/orders/{...}/confirm-time-fee`<br>`/api/orders/{...}/pay-balance`<br>`/api/orders/{...}/evaluation`<br>`/ai/guide/orders/{...}/complete-info` |
 | `subpkg/order/escort-detail` | 订单详情（陪诊师端） | 陪诊师订单详情，专属派单可查看完整资料、确认接单或拒绝派单；专属接单时段结束后展示“曾收到过派单、已转入公共大厅”的流转态和刷新/返回操作；接单后执行开始服务、结束服务、取消、扫码核销、评价查看等；扫码内容不匹配使用自定义提示面板。 | `/attendant/orders/{...}/evaluation`<br>`/attendant/orders/{...}/evaluation/reply`<br>`/attendant/orders/{...}/service-progress?step={...}`<br>`/attendant/orders/{...}`<br>`/attendant/orders/{...}/accept?attendantId={...}`<br>`/attendant/orders/{...}/reject-assigned`<br>`/attendant/orders/{...}/scan-qr?qrCodeContent={...}`<br>`/attendant/orders/{...}/cancel` |
 | `subpkg/order/prepare` | 服务前准备清单 | 服务前准备清单，展示陪诊服务前注意事项。 | 无直接接口调用/通过封装模块调用 |
-| `subpkg/order/submit-time-fee` | 提交时长与费用 | 陪诊师提交实际服务时长、费用和说明，驱动用户确认或争议流程；说明输入框按卡片宽度对齐，不因内边距溢出；加减时长按钮清理原生按钮边框并居中，避免符号不对称。 | `/attendant/orders/{...}`<br>`/attendant/orders/{...}/end?actualDuration={...}&attendantTimeRemark={...}` |
+| `subpkg/order/submit-time-fee` | 提交时长与费用 | 陪诊师提交实际服务时长、费用和说明，驱动用户确认或争议流程；说明输入框按卡片宽度对齐，不因内边距溢出；加减时长按钮统一尺寸、间距与对齐，使用对称符号并保持视觉居中，兼容时长增加/减少/不变时的差额展示。 | `/attendant/orders/{...}`<br>`/attendant/orders/{...}/end?actualDuration={...}&attendantTimeRemark={...}` |
 | `subpkg/evaluate/evaluate` | 订单评价 | 用户订单评价，加载订单和既有评价，提交星级、标签和文字内容。 | `/ai/guide/orders/{...}/complete-info`<br>`/api/orders/{...}/evaluation` |
 | `subpkg/auth/escort-register` | 陪诊师入驻 | 陪诊师入驻注册，填写基础信息、擅长领域、医院和简介后提交；注册成功后使用自定义底部引导面板进入登录，带 `after=qualification` 标记，陪诊师登录后进入陪诊师端“我的”，点击接单厅时由资质门禁弹窗提示上传资质。 | `/api/users/register` |
 | `subpkg/auth/user-register` | 用户注册 | 用户注册，填写手机号、姓名、密码等基础信息后提交；注册成功后使用自定义底部引导面板进入登录。 | `/api/users/register` |

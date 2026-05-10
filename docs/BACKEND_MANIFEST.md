@@ -1,6 +1,6 @@
 # Backend Manifest
 
-更新时间: 2026-05-07
+更新时间: 2026-05-10
 
 本清单由 Spring Boot 控制器注解、Swagger 注解和拦截器配置整理。权限列按 `WebMvcConfig`、`AuthInterceptor`、`AdminAuthInterceptor` 推导。
 
@@ -49,7 +49,7 @@
 | AttendantController | POST | `/attendant/orders/{orderId}/accept` | 接单；专属派单超过15分钟会服务端释放回公共接单大厅 | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:347` |
 | AttendantController | POST | `/attendant/orders/{orderId}/reject-assigned` | 拒绝专属派单 | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:378` |
 | AttendantController | POST | `/attendant/orders/{orderId}/start` | 开始服务 | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:400` |
-| AttendantController | POST | `/attendant/orders/{orderId}/end` | 结束服务，保存实际时长和陪诊师说明；成功时返回“服务已提交，待用户确认时长费用”并进入待确认时长费用 | 用户 JWT，仅订单所属陪诊师 | `src/main/java/org/example/controller/AttendantController.java:425` |
+| AttendantController | POST | `/attendant/orders/{orderId}/end` | 结束服务，保存实际时长和陪诊师说明；新增 actualDuration 必填与 0.5~24 小时区间校验，兼容时长增加、减少、不变三种提交场景；成功时返回“服务已提交，待用户确认时长费用”并进入待确认时长费用 | 用户 JWT，仅订单所属陪诊师 | `src/main/java/org/example/controller/AttendantController.java:425` |
 | AttendantController | POST | `/attendant/orders/{orderId}/service-progress` | 更新服务进度 | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:452` |
 | AttendantController | GET | `/attendant/orders` | 查询陪诊师订单，返回统一结算字段 `settlementAmount`、`platformFeeAmount`、`attendantIncomeAmount`；列表项返回 `paymentTime` 供专属派单确认窗口判断 | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:479` |
 | AttendantController | GET | `/attendant/orders/{orderId}` | 查询订单详情，返回统一结算字段 `settlementAmount`、`platformFeeAmount`、`attendantIncomeAmount` | 用户 JWT | `src/main/java/org/example/controller/AttendantController.java:585` |
