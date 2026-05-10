@@ -22,9 +22,13 @@
         <view class="time-row">
           <text class="label">实际时长</text>
           <view class="duration-input">
-            <button class="step-btn" @click="changeDuration(-0.5)">-</button>
+            <view class="step-btn" @click="changeDuration(-0.5)">
+              <text class="step-symbol" aria-label="减少时长">−</text>
+            </view>
             <text class="duration-text">{{ actualDuration.toFixed(1) }} 小时</text>
-            <button class="step-btn" @click="changeDuration(0.5)">+</button>
+            <view class="step-btn" @click="changeDuration(0.5)">
+              <text class="step-symbol" aria-label="增加时长">+</text>
+            </view>
           </view>
         </view>
         <view class="time-row">
@@ -325,31 +329,47 @@ export default {
 .duration-input {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+  min-width: 360rpx;
 }
+
 .step-btn {
-  width: 64rpx;
-  height: 64rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #dbe3f0;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
+  box-sizing: border-box;
   padding: 0;
   margin: 0;
-  box-sizing: border-box;
+  line-height: 1;
   flex-shrink: 0;
-  background: #eef3f9;
-  border-radius: 32rpx;
-  border: none;
-  font-size: 32rpx;
-  color: var(--text-main);
 }
+
 .step-btn::after {
   border: none;
 }
+
+.step-symbol {
+  width: 100%;
+  text-align: center;
+  color: #1f2937;
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-1rpx);
+}
+
 .duration-text {
-  margin: 0 16rpx;
-  font-size: 25rpx;
-  color: var(--text-main);
+  min-width: 170rpx;
+  text-align: center;
+  color: #0f172a;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .desc-input-wrap {
   width: 100%;
